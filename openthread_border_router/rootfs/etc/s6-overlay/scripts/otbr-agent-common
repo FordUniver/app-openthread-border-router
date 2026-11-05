@@ -46,3 +46,16 @@ otbr_cli() {
     printf '%s\n' "${output}"
 }
 
+# Only explicit values need startup ordering; an empty group keeps auto-attach.
+otbr_has_advanced_settings() {
+    [[ "$(bashio::jq "$(bashio::addon.config)" 'any((.advanced // {})[]; . != null)')" == "true" ]]
+}
+
+# Pass one optional setting to its native CLI command, including numeric zero.
+otbr_apply_setting() {
+    local option="advanced.$1"
+    shift
+    if bashio::config.has_value "${option}"; then
+        otbr_cli "$@" "$(bashio::config "${option}")" || true
+    fi
+}

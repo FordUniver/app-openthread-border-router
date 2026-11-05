@@ -34,39 +34,71 @@ configuration:
     description: >-
       Enable IPv6 to IPv4 network address translation. This allows Thread
       devices to communicate with devices on the Internet.
-  tx_power:
-    name: Transmit power
+  advanced:
+    name: Advanced Thread settings
     description: >-
-      Radio transmit power in dBm (default 6). Supported values depend on the
-      radio and firmware. Higher power can cause asymmetric links.
-  leader_weight:
-    name: Leader weight
-    description: >-
-      Leader weight from 0 to 255, used when Thread partitions merge.
-      Leave unset to keep OpenThread's default. This does not elect a new
-      leader.
-  take_leadership:
-    name: Take leadership
-    description: >-
-      Request leadership after attaching, unless already leader (default off).
-      This creates a new partition and can disrupt connectivity.
-  omr_preference:
-    name: Local OMR prefix preference
-    description: >-
-      Preference for this border router's local off-mesh-routable IPv6 prefix
-      (low, med or high). Leave unset to keep OpenThread's automatic behavior.
-  srp_anycast:
-    name: SRP anycast
-    description: >-
-      Advertise the SRP server in anycast mode (default off). Border routing
-      still controls when the server runs. See the documentation before
-      enabling.
-  srp_anycast_sequence_number:
-    name: SRP anycast sequence number seed
-    description: >-
-      Initial sequence number from 0 to 255 (default 0). When SRP anycast is
-      enabled, the saved number advances on each app start, wrapping after 255.
-      Changing this seed resets the next number to the new value.
+      Optional native OpenThread controls, applied on app restart. Leave fields
+      unset to keep the app and OpenThread defaults. Read the documentation
+      before changing routing or SRP settings.
+    fields:
+      tx_power:
+        name: Transmit power
+        description: >-
+          Radio transmit power in dBm (app default 6). Supported values depend
+          on the radio and firmware. Higher power can cause asymmetric links.
+      leader_weight:
+        name: Leader weight
+        description: >-
+          Weight from 0 to 255 for a partition this device forms as leader.
+          Affects partition merging; does not take leadership from another
+          router.
+      router_eligible:
+        name: Router eligibility
+        description: >-
+          Allow or prevent this device from becoming a Thread router. Leave
+          unset to keep OpenThread's default. Disabling this can disrupt
+          connectivity.
+      trel:
+        name: Thread Radio Encapsulation Link
+        description: >-
+          Enable or disable Thread communication over the backbone network using
+          TREL. The app enables TREL when this field is unset.
+      omr_mode:
+        name: OMR prefix mode
+        description: >-
+          Automatic, custom, or disabled advertisement of this border router's
+          off-mesh-routable prefix. Disabled does not disable border routing.
+      omr_prefix:
+        name: Custom OMR prefix
+        description: >-
+          Explicit IPv6 /64 prefix, required with custom OMR mode. No prefix is
+          inferred. Ignored in other modes.
+      omr_preference:
+        name: Custom OMR prefix preference
+        description: >-
+          Prefix selection preference (low, med, or high), required with custom
+          OMR mode. This does not set route preference or Thread leadership.
+      route_preference:
+        name: External route preference
+        description: >-
+          Preference for external routes published in Thread Network Data.
+          Leave unset for OpenThread's automatic preference.
+      rio_preference:
+        name: Backbone route preference
+        description: >-
+          Preference in Route Information Options sent on the backbone network.
+          Leave unset for OpenThread's automatic preference.
+      srp_address_mode:
+        name: SRP server address mode
+        description: >-
+          Advertise the Service Registration Protocol server using unicast
+          or anycast. Border routing still controls when the server runs.
+      srp_anycast_sequence_number:
+        name: SRP anycast sequence number
+        description: >-
+          Fixed value from 0 to 255, used in anycast mode. Does not select
+          anycast or advance on restart. Reusing it can delay client
+          re-registration.
   beta:
     name: Beta
     description: >-

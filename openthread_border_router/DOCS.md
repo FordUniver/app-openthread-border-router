@@ -60,22 +60,17 @@ and 8081 in the OpenThread REST API port field).
 
 App configuration:
 
-| Configuration               | Description                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| device (mandatory)          | Serial port where the OpenThread RCP Radio is attached                            |
-| baudrate                    | Serial port baudrate (depends on firmware)                                        |
-| flow_control                | If hardware flow control should be enabled (depends on firmware)                  |
-| otbr_log_level              | Set the log level of the OpenThread BorderRouter Agent                            |
-| firewall                    | Enable OpenThread Border Router firewall to block unnecessary traffic             |
-| nat64                       | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     |
-| tx_power                    | Radio transmit power in dBm (default 6)                                           |
-| leader_weight               | Leader weight from 0 to 255 (unset by default)                                    |
-| take_leadership             | Request leadership after attaching (default off)                                  |
-| omr_preference              | Local OMR prefix preference: low, med or high (unset by default)                  |
-| srp_anycast                 | Advertise the SRP server in anycast mode (default off)                            |
-| srp_anycast_sequence_number | Initial anycast sequence number from 0 to 255 (default 0)                         |
-| network_device              | IP address and port to connect to a network-based RCP (see below)                 |
-| beta                        | Enable beta mode to run a newer, experimental version of OpenThread Border Router |
+| Configuration      | Description                                                                       |
+| ------------------ | --------------------------------------------------------------------------------- |
+| device (mandatory) | Serial port where the OpenThread RCP Radio is attached                            |
+| baudrate           | Serial port baudrate (depends on firmware)                                        |
+| flow_control       | If hardware flow control should be enabled (depends on firmware)                  |
+| otbr_log_level     | Set the log level of the OpenThread BorderRouter Agent                            |
+| firewall           | Enable OpenThread Border Router firewall to block unnecessary traffic             |
+| nat64              | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     |
+| advanced           | Optional native Thread controls (see below)                                       |
+| network_device     | IP address and port to connect to a network-based RCP (see below)                 |
+| beta               | Enable beta mode to run a newer, experimental version of OpenThread Border Router |
 
 > [!WARNING]
 > The OTBR expects the RCP connected radio to be on a reliable link such as
@@ -96,49 +91,71 @@ App configuration:
 
 ### Advanced Thread settings
 
-The defaults retain the app's 6 dBm transmit power and OpenThread's automatic
-leadership, routing and SRP behavior. Changes take effect when the app restarts.
-Unsupported values or failed commands are logged without stopping the app.
+The configuration form groups these optional controls under the collapsed
+**Advanced Thread settings** section. In YAML, place them under `advanced`.
+The default is `advanced: {}`: the app retains its 6 dBm transmit power and
+TREL enablement, and OpenThread controls leadership, routing, and SRP.
+Remove a field to restore its default on the next app restart.
 
-`tx_power` accepts -128 to 127 dBm, but the radio and its firmware determine the
-supported range. Choose a value appropriate for your hardware and local rules.
+| Setting                       | Native CLI setting    | Purpose                                                                          |
+| ----------------------------- | --------------------- | -------------------------------------------------------------------------------- |
+| `tx_power`                    | `txpower`             | Radio transmit power in dBm (-128 to 127; app default 6)                         |
+| `leader_weight`               | `leaderweight`        | Weight for partitions formed by this device as leader (0 to 255)                 |
+| `router_eligible`             | `routereligible`      | `enable` or `disable` eligibility to become a Thread router                      |
+| `trel`                        | `trel`                | `enable` or `disable` Thread Radio Encapsulation Link over the backbone          |
+| `omr_mode`                    | `br omrconfig`        | `auto`, `custom`, or `disabled` advertisement of this border router's OMR prefix |
+| `omr_prefix`                  | `br omrconfig custom` | Explicit IPv6 /64 prefix, required in custom mode                                |
+| `omr_preference`              | `br omrconfig custom` | `low`, `med`, or `high` prefix preference, required in custom mode               |
+| `route_preference`            | `br routeprf`         | `low`, `med`, or `high` external route preference in Thread Network Data         |
+| `rio_preference`              | `br rioprf`           | `low`, `med`, or `high` Route Information Option preference on the backbone      |
+| `srp_address_mode`            | `srp server addrmode` | `unicast` or `anycast` SRP server advertisement                                  |
+| `srp_anycast_sequence_number` | `srp server seqnum`   | Fixed anycast sequence number (0 to 255)                                         |
+
+For example, these options set transmit power and the weight for partitions
+this device forms. All other controls keep their defaults:
+
+```yaml
+advanced:
+  tx_power: 6
+  leader_weight: 72
+```
+
+The radio and its firmware determine the supported transmit power range.
 Higher power can produce asymmetric links: devices hear the border router but
 cannot reach it with their own weaker transmitters.
 
-`leader_weight` sets the weight used when comparing Thread partitions for merging.
-It does not make this router the leader of an existing partition. Leave it unset
-to keep OpenThread's default. `take_leadership` requests the leader role once per
-app start, after attachment, unless already leader. This creates a new partition;
-other routers decide whether to merge into it. It can interrupt connectivity and
-does not guarantee that this router will remain leader.
+Leader weight affects the preference between Thread partitions when they merge.
+It does not elect a new leader in an existing partition or change the weight
+advertised by a partition whose leadership was already established. The app does
+not force leadership or create a new partition. Disabling router eligibility
+makes this device operate as a child and can disrupt connectivity.
 
-`omr_preference` sets the preference of this border router's existing local
-off-mesh-routable (OMR) /64 prefix. It uses that prefix in OpenThread's custom OMR
-mode; it does not replace it with a user-provided prefix. Leave this option unset
-to retain automatic OMR behavior. A higher preference affects prefix selection,
-not Thread leadership.
+An off-mesh-routable (OMR) prefix supplies addresses used to reach Thread devices
+from the backbone network. Its preference affects which prefix border routers
+favor; it is separate from DNS, Thread leadership, and the two route preferences.
+Custom mode requires both an explicit valid IPv6 /64 and a preference. The app
+never copies or invents a prefix. OpenThread validates the supplied prefix.
+`omr_prefix` and `omr_preference` are ignored outside custom mode. `disabled` maps
+to `br omrconfig disable`: this border router stops advertising its own OMR prefix
+but can use one advertised by another border router. Border routing remains
+enabled. Leave either route preference unset for OpenThread to choose it
+automatically.
 
-OMR preference and leadership are applied after Home Assistant discovery. The
-app waits up to two minutes for Thread attachment. On a fresh installation,
-Home Assistant can discover and commission the network during this wait. If
-attachment takes longer, these settings are skipped with a warning; restart the
-app after commissioning to apply them. They are not continuously enforced.
+Service Registration Protocol (SRP) address mode affects how clients find and
+select a server. It does not transfer registrations between border routers or
+guarantee selection of this server. Border routing retains control over when SRP
+runs. The sequence number is a literal value: setting it does not select anycast
+mode, and the app does not increment or persist a counter. Reusing the same
+anycast sequence after a server restart can delay client re-registration. These
+controls do not implement an automatic SRP failover policy.
 
-`srp_anycast` switches the Service Registration Protocol (SRP) server from its
-default unicast advertisement to anycast. Border routing still controls whether
-the server runs. This affects how Thread clients select an SRP server; it does
-not transfer registrations between border routers or guarantee server selection.
-After changing SRP mode, the app makes up to three attempts to restore border
-routing's control. If all attempts fail, startup continues with a warning, but
-SRP may remain disabled. Resolve the reported command failure and restart the app.
-
-With anycast enabled, the app saves a sequence number under
-`/data/thread/srp-anycast-sequence` and advances it on each start, modulo 256.
-A changed sequence number prompts clients to register again after a restart.
-`srp_anycast_sequence_number` supplies the initial value; changing this seed
-restarts the sequence from the new value. A missing or malformed saved counter
-also restarts from the seed. The counter is untouched when anycast is disabled.
-No Thread dataset or existing settings files are modified by these options.
+Changes take effect when the app restarts. With any advanced value configured,
+the app starts OTBR with automatic attachment paused, applies the controls, then
+resumes a saved network. A fresh installation remains available for Home
+Assistant to discover and commission; no dataset is created by these options.
+Optional command failures are logged and do not skip network resume. If the
+resume commands themselves fail, the app logs a warning; resolve the reported
+error and restart it. An empty group uses the original automatic attachment path.
 
 ## Support
 

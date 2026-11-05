@@ -35,7 +35,7 @@ configuration:
       Enable IPv6 to IPv4 network address translation. This allows Thread
       devices to communicate with devices on the Internet.
   advanced:
-    name: Advanced Thread settings
+    name: Advanced settings
     description: >-
       Optional native OpenThread controls, applied on app restart. Leave fields
       unset to keep the app and OpenThread defaults. Read the documentation

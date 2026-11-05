@@ -89,10 +89,10 @@ App configuration:
 > [!NOTE]
 > When using a network device, you still need to set a dummy serial port device, e.g. `/dev/ttyS3`.
 
-### Advanced Thread settings
+### Advanced settings
 
 The configuration form groups these optional controls under the collapsed
-**Advanced Thread settings** section. In YAML, place them under `advanced`.
+**Advanced settings** section. In YAML, place them under `advanced`.
 The default is `advanced: {}`: the app retains its 6 dBm transmit power and
 TREL enablement, and OpenThread controls leadership, routing, and SRP.
 Remove a field to restore its default on the next app restart.

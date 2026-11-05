@@ -27,10 +27,11 @@ options:
   device: null
   baudrate: "460800"
   flow_control: true
-  otbr_log_level: notice
-  firewall: true
-  nat64: false
-  beta: false
+  advanced:
+    otbr_log_level: notice
+    firewall: true
+    nat64: false
+    beta: false
 ports:
   8080/tcp: null
   8081/tcp: null
@@ -41,10 +42,23 @@ schema:
   device: device(subsystem=tty)
   baudrate: list(57600|115200|230400|460800|921600|1000000)
   flow_control: bool
-  backbone_interface: str?
   network_device: str?
-  otbr_log_level: list(debug|info|notice|warning|error|critical|alert|emergency)
-  firewall: bool
-  nat64: bool
-  beta: bool?
+  advanced:
+    otbr_log_level: >-
+      list(debug|info|notice|warning|error|critical|alert|emergency)
+    firewall: bool
+    nat64: bool
+    backbone_interface: str?
+    beta: bool?
+    tx_power: int(-128,127)?
+    leader_weight: int(0,255)?
+    router_eligible: list(enable|disable)?
+    trel: list(enable|disable)?
+    omr_mode: list(auto|custom|disabled)?
+    omr_prefix: str?
+    omr_preference: list(low|med|high)?
+    route_preference: list(low|med|high)?
+    rio_preference: list(low|med|high)?
+    srp_address_mode: list(unicast|anycast)?
+    srp_anycast_sequence_number: int(0,255)?
 startup: services

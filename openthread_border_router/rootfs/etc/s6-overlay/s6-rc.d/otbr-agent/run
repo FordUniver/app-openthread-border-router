@@ -16,6 +16,7 @@ declare migrate_flow_control
 declare otbr_log_level_int
 declare otbr_rest_listen
 declare otbr_rest_listen_port
+declare -a auto_attach_args=()
 
 # Cleanup unused configs
 if bashio::config.exists 'autoflash_firmware'; then
@@ -26,8 +27,8 @@ backbone_if=""
 
 # Backbone network interface can be configured by user or auto-detected by looking for the primary network interface in the system.
 # If no primary network interface is found, the app will exit with an error and ask the user to configure a backbone network interface in the app configuration.
-if bashio::config.has_value 'backbone_interface'; then
-    backbone_if="$(bashio::config 'backbone_interface')"
+if bashio::config.has_value 'advanced.backbone_interface'; then
+    backbone_if="$(bashio::config 'advanced.backbone_interface')"
 else
     backbone_if="$(bashio::api.supervisor 'GET' '/network/info' '' 'first(.interfaces[] | select (.primary == true)) .interface // empty')"
     if [ -z "${backbone_if}" ]; then
@@ -59,7 +60,7 @@ else
 fi
 
 otbr_log_level_int="$(otbr_log_level_to_int)" \
-    || bashio::exit.nok "Unknown otbr_log_level: $(bashio::config otbr_log_level)"
+    || bashio::exit.nok "Unknown otbr_log_level: $(bashio::config 'advanced.otbr_log_level')"
 
 # shellcheck disable=SC2015
 mkdir -p /data/thread && ln -sft /var/lib /data/thread || bashio::exit.nok "Could not create directory /var/lib/thread to store Thread data."
@@ -78,7 +79,7 @@ ip6tables -I FORWARD 1 -o "${thread_if}" -j "${otbr_forward_ingress_chain}"
 ip6tables -N "${otbr_forward_egress_chain}"
 ip6tables -I FORWARD 2 -i "${thread_if}" -j "${otbr_forward_egress_chain}"
 
-if bashio::config.true 'firewall'; then
+if bashio::config.true 'advanced.firewall'; then
     bashio::log.info "Setup OTBR firewall..."
 
     ip6tables -A "${otbr_forward_ingress_chain}" -m pkttype --pkt-type unicast -i "${thread_if}" -j DROP
@@ -94,7 +95,7 @@ else
     ip6tables -A "${otbr_forward_egress_chain}" -j ACCEPT
 fi
 
-if bashio::config.true 'nat64'; then
+if bashio::config.true 'advanced.nat64'; then
     # Mark Thread traffic in mangle
     iptables -t mangle -A PREROUTING -i "${thread_if}" -j MARK --set-mark "${otbr_fw_mark}"
 
@@ -135,11 +136,16 @@ python3 /usr/local/bin/migrate_otbr_settings.py \
     --flow-control "${migrate_flow_control}" \
     --data-dir /data/thread/
 
+# Apply advanced settings before Thread attaches and border routing starts SRP.
+if otbr_has_thread_settings; then
+    auto_attach_args+=(--auto-attach=0)
+fi
+
 bashio::log.info "Starting otbr-agent..."
 # shellcheck disable=SC2086
 exec s6-notifyoncheck -d -s 300 -w 300 -n 0 stdbuf -oL \
     "/usr/sbin/otbr-agent" -I ${thread_if} -B "${backbone_if}" \
         --rest-listen-address "${otbr_rest_listen}" \
-        -d${otbr_log_level_int} -v -s \
+        -d${otbr_log_level_int} -v -s "${auto_attach_args[@]}" \
         "spinel+hdlc+uart://${device}?uart-baudrate=${baudrate}${flow_control}" \
         "trel://${backbone_if}"

@@ -4,6 +4,25 @@
 # Select OTBR version and handle automatic beta disable/promotion
 # ==============================================================================
 
+# Read unfiltered saved options: the validated config omits the old root keys.
+# Legacy values override new defaults once, then their root keys are removed.
+options="$(bashio::addon.options)" \
+    || bashio::exit.nok "Could not read saved options for advanced settings migration."
+# shellcheck disable=SC2016 # $key is a jq variable.
+migrated_options="$(bashio::jq "${options}" '
+    if type != "object" then error("Expected saved options") else
+        reduce ["firewall", "nat64", "backbone_interface", "otbr_log_level", "beta"][] as $key (.;
+            if has($key) then .advanced[$key] = .[$key] | del(.[$key]) else . end)
+    end
+')" || bashio::exit.nok "Could not migrate advanced settings."
+if [[ "${migrated_options}" != "${options}" ]]; then
+    bashio::log.info "Moving saved app options into advanced settings."
+    bashio::api.supervisor POST /addons/self/options \
+        "$(bashio::var.json options "^${migrated_options}")" \
+        || bashio::exit.nok "Could not save advanced settings; startup stopped to preserve existing values."
+    bashio::cache.flush_all
+fi
+
 # Auto disable beta when we promote beta -> stable
 declare beta_auto_disable_version
 declare marker
@@ -18,10 +37,10 @@ if [[ -f ${marker} ]]; then
 fi
 
 beta_active=false
-if bashio::config.true 'beta'; then
+if bashio::config.true 'advanced.beta'; then
     if (( marker_version < beta_auto_disable_version )); then
         bashio::log.warning "Disabling beta mode automatically; the previous beta is now stable."
-        bashio::addon.option 'beta' '^false'
+        bashio::addon.option 'advanced.beta' '^false'
     else
         beta_active=true
     fi

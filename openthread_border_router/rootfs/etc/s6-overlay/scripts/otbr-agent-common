@@ -17,7 +17,7 @@ otbr_fw_mark="0x1001"
 # non-zero on an unknown level (callers own the user-facing error message).
 otbr_log_level_to_int() {
     local level
-    level=$(bashio::string.lower "$(bashio::config otbr_log_level)")
+    level=$(bashio::string.lower "$(bashio::config 'advanced.otbr_log_level')")
     case "${level}" in
         debug)     echo "7" ;;
         info)      echo "6" ;;
@@ -31,3 +31,36 @@ otbr_log_level_to_int() {
     esac
 }
 
+# ot-ctl can report a CLI error while exiting successfully. Bound new optional
+# commands and treat either kind of failure as a rejected setting.
+otbr_cli() {
+    local output
+    if ! output=$(timeout --kill-after=1 5 ot-ctl "$@" 2>&1); then
+        bashio::log.warning "OpenThread command failed: $* (${output})" >&2
+        return 1
+    fi
+    if [[ "${output}" =~ (^|$'\n')Error[[:space:]] ]]; then
+        bashio::log.warning "OpenThread rejected command: $* (${output})" >&2
+        return 1
+    fi
+    printf '%s\n' "${output}"
+}
+
+# Only native Thread controls need startup ordering, not app options/defaults.
+otbr_has_thread_settings() {
+    [[ "$(bashio::jq "$(bashio::addon.config)" '
+        [.advanced | .tx_power, .leader_weight, .router_eligible, .trel,
+            .omr_mode, .omr_prefix, .omr_preference, .route_preference,
+            .rio_preference, .srp_address_mode, .srp_anycast_sequence_number]
+        | any(. != null)
+    ')" == "true" ]]
+}
+
+# Pass one optional setting to its native CLI command, including numeric zero.
+otbr_apply_setting() {
+    local option="advanced.$1"
+    shift
+    if bashio::config.has_value "${option}"; then
+        otbr_cli "$@" "$(bashio::config "${option}")" || true
+    fi
+}

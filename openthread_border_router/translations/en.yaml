@@ -10,35 +10,99 @@ configuration:
   flow_control:
     name: Hardware flow control
     description: Enable hardware flow control for serial port.
-  backbone_interface:
-    name: Backbone Network Interface
-    description: >-
-      The network interface used for the backbone network.
-      If not specified, it falls back to the primary interface.
   network_device:
     name: Network Device
     description: >-
       <host:port> when connecting to a device via sockets (takes precedence
       over above configuration). Not recommended! See documentation for more
       information.
-  otbr_log_level:
-    name: OpenThread Border Router agent log level
+  advanced:
+    name: Advanced settings
     description: >-
-      Set logging level of the OpenThread Border Router agent (otbr-agent).
-  firewall:
-    name: OTBR firewall
-    description: >-
-      Use OpenThread Border Router firewall to block unnecessary traffic.
-  nat64:
-    name: NAT64
-    description: >-
-      Enable IPv6 to IPv4 network address translation. This allows Thread
-      devices to communicate with devices on the Internet.
-  beta:
-    name: Beta
-    description: >-
-      Enable beta mode to run a newer, experimental version of OpenThread
-      Border Router.
+      App settings and optional native OpenThread controls, applied on app
+      restart. Read the documentation before changing routing or SRP settings.
+    fields:
+      otbr_log_level:
+        name: OpenThread Border Router agent log level
+        description: >-
+          Set logging level of the OpenThread Border Router agent (otbr-agent).
+      firewall:
+        name: OTBR firewall
+        description: >-
+          Use OpenThread Border Router firewall to block unnecessary traffic.
+      nat64:
+        name: NAT64
+        description: >-
+          Enable IPv6 to IPv4 network address translation. This allows Thread
+          devices to communicate with devices on the Internet.
+      backbone_interface:
+        name: Backbone Network Interface
+        description: >-
+          The network interface used for the backbone network.
+          If not specified, it falls back to the primary interface.
+      beta:
+        name: Beta
+        description: >-
+          Enable beta mode to run a newer, experimental version of OpenThread
+          Border Router.
+      tx_power:
+        name: Transmit power
+        description: >-
+          Radio transmit power in dBm (app default 6). Supported values depend
+          on the radio and firmware. Higher power can cause asymmetric links.
+      leader_weight:
+        name: Leader weight
+        description: >-
+          Weight from 0 to 255 for a partition this device forms as leader.
+          Affects partition merging; does not take leadership from another
+          router.
+      router_eligible:
+        name: Router eligibility
+        description: >-
+          Allow or prevent this device from becoming a Thread router. Leave
+          unset to keep OpenThread's default. Disabling this can disrupt
+          connectivity.
+      trel:
+        name: Thread Radio Encapsulation Link
+        description: >-
+          Enable or disable Thread communication over the backbone network using
+          TREL. The app enables TREL when this field is unset.
+      omr_mode:
+        name: OMR prefix mode
+        description: >-
+          Automatic, custom, or disabled advertisement of this border router's
+          off-mesh-routable prefix. Disabled does not disable border routing.
+      omr_prefix:
+        name: Custom OMR prefix
+        description: >-
+          Explicit IPv6 /64 prefix, required with custom OMR mode. No prefix is
+          inferred. Ignored in other modes.
+      omr_preference:
+        name: Custom OMR prefix preference
+        description: >-
+          Prefix selection preference (low, med, or high), required with custom
+          OMR mode. This does not set route preference or Thread leadership.
+      route_preference:
+        name: External route preference
+        description: >-
+          Preference for external routes published in Thread Network Data.
+          Leave unset for OpenThread's automatic preference.
+      rio_preference:
+        name: Backbone route preference
+        description: >-
+          Preference in Route Information Options sent on the backbone network.
+          Leave unset for OpenThread's automatic preference.
+      srp_address_mode:
+        name: SRP server address mode
+        description: >-
+          Advertise the Service Registration Protocol server using unicast
+          or anycast. Border routing still controls when the server runs.
+      srp_anycast_sequence_number:
+        name: SRP anycast sequence number
+        description: >-
+          Fixed value from 0 to 255, used in anycast mode. Does not select
+          anycast or advance on restart. Reusing it can delay client
+          re-registration.
 network:
   8080/tcp: OpenThread Web port
   8081/tcp: OpenThread REST API port

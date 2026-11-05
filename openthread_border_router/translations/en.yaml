@@ -10,37 +10,41 @@ configuration:
   flow_control:
     name: Hardware flow control
     description: Enable hardware flow control for serial port.
-  backbone_interface:
-    name: Backbone Network Interface
-    description: >-
-      The network interface used for the backbone network.
-      If not specified, it falls back to the primary interface.
   network_device:
     name: Network Device
     description: >-
       <host:port> when connecting to a device via sockets (takes precedence
       over above configuration). Not recommended! See documentation for more
       information.
-  otbr_log_level:
-    name: OpenThread Border Router agent log level
-    description: >-
-      Set logging level of the OpenThread Border Router agent (otbr-agent).
-  firewall:
-    name: OTBR firewall
-    description: >-
-      Use OpenThread Border Router firewall to block unnecessary traffic.
-  nat64:
-    name: NAT64
-    description: >-
-      Enable IPv6 to IPv4 network address translation. This allows Thread
-      devices to communicate with devices on the Internet.
   advanced:
     name: Advanced settings
     description: >-
-      Optional native OpenThread controls, applied on app restart. Leave fields
-      unset to keep the app and OpenThread defaults. Read the documentation
-      before changing routing or SRP settings.
+      App settings and optional native OpenThread controls, applied on app
+      restart. Read the documentation before changing routing or SRP settings.
     fields:
+      otbr_log_level:
+        name: OpenThread Border Router agent log level
+        description: >-
+          Set logging level of the OpenThread Border Router agent (otbr-agent).
+      firewall:
+        name: OTBR firewall
+        description: >-
+          Use OpenThread Border Router firewall to block unnecessary traffic.
+      nat64:
+        name: NAT64
+        description: >-
+          Enable IPv6 to IPv4 network address translation. This allows Thread
+          devices to communicate with devices on the Internet.
+      backbone_interface:
+        name: Backbone Network Interface
+        description: >-
+          The network interface used for the backbone network.
+          If not specified, it falls back to the primary interface.
+      beta:
+        name: Beta
+        description: >-
+          Enable beta mode to run a newer, experimental version of OpenThread
+          Border Router.
       tx_power:
         name: Transmit power
         description: >-
@@ -99,11 +103,6 @@ configuration:
           Fixed value from 0 to 255, used in anycast mode. Does not select
           anycast or advance on restart. Reusing it can delay client
           re-registration.
-  beta:
-    name: Beta
-    description: >-
-      Enable beta mode to run a newer, experimental version of OpenThread
-      Border Router.
 network:
   8080/tcp: OpenThread Web port
   8081/tcp: OpenThread REST API port

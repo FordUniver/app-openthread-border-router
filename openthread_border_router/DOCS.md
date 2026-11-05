@@ -60,17 +60,13 @@ and 8081 in the OpenThread REST API port field).
 
 App configuration:
 
-| Configuration      | Description                                                                       |
-| ------------------ | --------------------------------------------------------------------------------- |
-| device (mandatory) | Serial port where the OpenThread RCP Radio is attached                            |
-| baudrate           | Serial port baudrate (depends on firmware)                                        |
-| flow_control       | If hardware flow control should be enabled (depends on firmware)                  |
-| otbr_log_level     | Set the log level of the OpenThread BorderRouter Agent                            |
-| firewall           | Enable OpenThread Border Router firewall to block unnecessary traffic             |
-| nat64              | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     |
-| advanced           | Optional native Thread controls (see below)                                       |
-| network_device     | IP address and port to connect to a network-based RCP (see below)                 |
-| beta               | Enable beta mode to run a newer, experimental version of OpenThread Border Router |
+| Configuration      | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| device (mandatory) | Serial port where the OpenThread RCP Radio is attached            |
+| baudrate           | Serial port baudrate (depends on firmware)                        |
+| flow_control       | If hardware flow control should be enabled (depends on firmware)  |
+| advanced           | App settings and optional native Thread controls (see below)      |
+| network_device     | IP address and port to connect to a network-based RCP (see below) |
 
 > [!WARNING]
 > The OTBR expects the RCP connected radio to be on a reliable link such as
@@ -91,11 +87,28 @@ App configuration:
 
 ### Advanced settings
 
-The configuration form groups these optional controls under the collapsed
-**Advanced settings** section. In YAML, place them under `advanced`.
-The default is `advanced: {}`: the app retains its 6 dBm transmit power and
-TREL enablement, and OpenThread controls leadership, routing, and SRP.
-Remove a field to restore its default on the next app restart.
+The configuration form groups app settings and optional native Thread controls
+under the collapsed **Advanced settings** section. In YAML, place them under
+`advanced`. The app settings retain their existing defaults:
+
+| Setting              | Purpose                                                                           | Default           |
+| -------------------- | --------------------------------------------------------------------------------- | ----------------- |
+| `otbr_log_level`     | Set the log level of the OpenThread BorderRouter Agent                            | `notice`          |
+| `firewall`           | Enable OpenThread Border Router firewall to block unnecessary traffic             | `true`            |
+| `nat64`              | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     | `false`           |
+| `backbone_interface` | Backbone network interface override                                               | Primary interface |
+| `beta`               | Enable beta mode to run a newer, experimental version of OpenThread Border Router | `false`           |
+
+On the first start after upgrading, saved top-level values for these app settings
+move into `advanced` automatically. Old top-level values take precedence during
+this migration because nested values may be newly supplied defaults. If moving
+settings manually, remove their old top-level keys. Start the upgraded app once
+before editing its configuration; saving beforehand can discard old keys before
+the app can migrate them. A failed migration stops startup with an error.
+
+The following native controls are optional. Without them, the app retains its
+6 dBm transmit power and TREL enablement, and OpenThread controls leadership,
+routing, and SRP. Remove a native control to restore its default on restart.
 
 | Setting                       | Native CLI setting    | Purpose                                                                          |
 | ----------------------------- | --------------------- | -------------------------------------------------------------------------------- |
@@ -149,13 +162,13 @@ mode, and the app does not increment or persist a counter. Reusing the same
 anycast sequence after a server restart can delay client re-registration. These
 controls do not implement an automatic SRP failover policy.
 
-Changes take effect when the app restarts. With any advanced value configured,
+Changes take effect when the app restarts. With any native Thread control configured,
 the app starts OTBR with automatic attachment paused, applies the controls, then
 resumes a saved network. A fresh installation remains available for Home
 Assistant to discover and commission; no dataset is created by these options.
 Optional command failures are logged and do not skip network resume. If the
 resume commands themselves fail, the app logs a warning; resolve the reported
-error and restart it. An empty group uses the original automatic attachment path.
+error and restart it. App settings alone use the original automatic attachment path.
 
 ## Support
 

@@ -4,6 +4,9 @@
 # Configure OTBR depending on add-on settings
 # ==============================================================================
 
+# shellcheck source=./openthread_border_router/rootfs/etc/s6-overlay/scripts/otbr-agent-common
+. /etc/s6-overlay/scripts/otbr-agent-common
+
 ot-ctl trel enable
 
 if bashio::config.true 'nat64'; then
@@ -19,4 +22,8 @@ ot-ctl mdns enable
 
 # To avoid asymmetric link quality the TX power from the controller should not
 # exceed that of what other Thread routers devices typically use.
-ot-ctl txpower 6
+tx_power=6
+if bashio::config.has_value 'tx_power'; then
+    tx_power="$(bashio::config 'tx_power')"
+fi
+otbr_cli txpower "${tx_power}" || true

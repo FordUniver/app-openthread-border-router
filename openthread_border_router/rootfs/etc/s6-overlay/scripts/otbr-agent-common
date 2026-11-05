@@ -31,3 +31,18 @@ otbr_log_level_to_int() {
     esac
 }
 
+# ot-ctl can report a CLI error while exiting successfully. Bound new optional
+# commands and treat either kind of failure as a rejected setting.
+otbr_cli() {
+    local output
+    if ! output=$(timeout --kill-after=1 5 ot-ctl "$@" 2>&1); then
+        bashio::log.warning "OpenThread command failed: $* (${output})" >&2
+        return 1
+    fi
+    if [[ "${output}" =~ (^|$'\n')Error[[:space:]] ]]; then
+        bashio::log.warning "OpenThread rejected command: $* (${output})" >&2
+        return 1
+    fi
+    printf '%s\n' "${output}"
+}
+

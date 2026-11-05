@@ -68,6 +68,12 @@ App configuration:
 | otbr_log_level     | Set the log level of the OpenThread BorderRouter Agent                            |
 | firewall           | Enable OpenThread Border Router firewall to block unnecessary traffic             |
 | nat64              | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     |
+| tx_power           | Radio transmit power in dBm (default 6)                                          |
+| leader_weight      | Leader weight from 0 to 255 (unset by default)                                    |
+| take_leadership    | Request leadership after attaching (default off)                                 |
+| omr_preference     | Local OMR prefix preference: low, med or high (unset by default)                  |
+| srp_anycast        | Advertise the SRP server in anycast mode (default off)                            |
+| srp_anycast_sequence_number | Initial anycast sequence number from 0 to 255 (default 0)                |
 | network_device     | IP address and port to connect to a network-based RCP (see below)                 |
 | beta               | Enable beta mode to run a newer, experimental version of OpenThread Border Router |
 
@@ -87,6 +93,49 @@ App configuration:
 
 > [!NOTE]
 > When using a network device, you still need to set a dummy serial port device, e.g. `/dev/ttyS3`.
+
+### Advanced Thread settings
+
+The defaults retain the app's 6 dBm transmit power and OpenThread's automatic
+leadership, routing and SRP behavior. Changes take effect when the app restarts.
+Unsupported values or failed commands are logged without stopping the app.
+
+`tx_power` accepts -128 to 127 dBm, but the radio and its firmware determine the
+supported range. Choose a value appropriate for your hardware and local rules.
+Higher power can produce asymmetric links: devices hear the border router but
+cannot reach it with their own weaker transmitters.
+
+`leader_weight` sets the weight used when comparing Thread partitions for merging.
+It does not make this router the leader of an existing partition. Leave it unset
+to keep OpenThread's default. `take_leadership` requests the leader role once per
+app start, after attachment, unless already leader. This creates a new partition;
+other routers decide whether to merge into it. It can interrupt connectivity and
+does not guarantee that this router will remain leader.
+
+`omr_preference` sets the preference of this border router's existing local
+off-mesh-routable (OMR) /64 prefix. It uses that prefix in OpenThread's custom OMR
+mode; it does not replace it with a user-provided prefix. Leave this option unset
+to retain automatic OMR behavior. A higher preference affects prefix selection,
+not Thread leadership.
+
+OMR preference and leadership are applied after Home Assistant discovery. The
+app waits up to two minutes for Thread attachment. On a fresh installation,
+Home Assistant can discover and commission the network during this wait. If
+attachment takes longer, these settings are skipped with a warning; restart the
+app after commissioning to apply them. They are not continuously enforced.
+
+`srp_anycast` switches the Service Registration Protocol (SRP) server from its
+default unicast advertisement to anycast. Border routing still controls whether
+the server runs. This affects how Thread clients select an SRP server; it does
+not transfer registrations between border routers or guarantee server selection.
+
+With anycast enabled, the app saves a sequence number under
+`/data/thread/srp-anycast-sequence` and advances it on each start, modulo 256.
+A changed sequence number prompts clients to register again after a restart.
+`srp_anycast_sequence_number` supplies the initial value; changing this seed
+restarts the sequence from the new value. A missing or malformed saved counter
+also restarts from the seed. The counter is untouched when anycast is disabled.
+No Thread dataset or existing settings files are modified by these options.
 
 ## Support
 

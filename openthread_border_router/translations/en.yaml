@@ -34,6 +34,37 @@ configuration:
     description: >-
       Enable IPv6 to IPv4 network address translation. This allows Thread
       devices to communicate with devices on the Internet.
+  tx_power:
+    name: Transmit power
+    description: >-
+      Radio transmit power in dBm (default 6). Supported values depend on the
+      radio and firmware. Higher power can cause asymmetric links.
+  leader_weight:
+    name: Leader weight
+    description: >-
+      Leader weight from 0 to 255, used when Thread partitions merge.
+      Leave unset to keep OpenThread's default. This does not elect a new leader.
+  take_leadership:
+    name: Take leadership
+    description: >-
+      Request leadership after attaching, unless already leader (default off).
+      This creates a new partition and can disrupt connectivity.
+  omr_preference:
+    name: Local OMR prefix preference
+    description: >-
+      Preference for this border router's local off-mesh-routable IPv6 prefix
+      (low, med or high). Leave unset to keep OpenThread's automatic behavior.
+  srp_anycast:
+    name: SRP anycast
+    description: >-
+      Advertise the SRP server in anycast mode (default off). Border routing
+      still controls when the server runs. See the documentation before enabling.
+  srp_anycast_sequence_number:
+    name: SRP anycast sequence number seed
+    description: >-
+      Initial sequence number from 0 to 255 (default 0). When SRP anycast is
+      enabled, the saved number advances on each app start, wrapping after 255.
+      Changing this seed resets the next number to the new value.
   beta:
     name: Beta
     description: >-

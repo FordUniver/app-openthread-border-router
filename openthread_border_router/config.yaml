@@ -30,6 +30,10 @@ options:
   otbr_log_level: notice
   firewall: true
   nat64: false
+  tx_power: 6
+  take_leadership: false
+  srp_anycast: false
+  srp_anycast_sequence_number: 0
   beta: false
 ports:
   8080/tcp: null
@@ -46,5 +50,11 @@ schema:
   otbr_log_level: list(debug|info|notice|warning|error|critical|alert|emergency)
   firewall: bool
   nat64: bool
+  tx_power: int(-128,127)?
+  leader_weight: int(0,255)?
+  take_leadership: bool?
+  omr_preference: list(low|med|high)?
+  srp_anycast: bool?
+  srp_anycast_sequence_number: int(0,255)?
   beta: bool?
 startup: services

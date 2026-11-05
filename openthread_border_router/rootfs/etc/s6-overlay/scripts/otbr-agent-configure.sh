@@ -13,7 +13,7 @@ else
     ot-ctl trel enable
 fi
 
-if bashio::config.true 'nat64'; then
+if bashio::config.true 'advanced.nat64'; then
     bashio::log.info "Enabling NAT64."
     ot-ctl nat64 enable
     ot-ctl dns server upstream enable
@@ -32,7 +32,7 @@ else
     ot-ctl txpower 6
 fi
 
-if ! otbr_has_advanced_settings; then
+if ! otbr_has_thread_settings; then
     exit 0
 fi
 

@@ -17,7 +17,7 @@ otbr_fw_mark="0x1001"
 # non-zero on an unknown level (callers own the user-facing error message).
 otbr_log_level_to_int() {
     local level
-    level=$(bashio::string.lower "$(bashio::config otbr_log_level)")
+    level=$(bashio::string.lower "$(bashio::config 'advanced.otbr_log_level')")
     case "${level}" in
         debug)     echo "7" ;;
         info)      echo "6" ;;
@@ -46,9 +46,14 @@ otbr_cli() {
     printf '%s\n' "${output}"
 }
 
-# Only explicit values need startup ordering; an empty group keeps auto-attach.
-otbr_has_advanced_settings() {
-    [[ "$(bashio::jq "$(bashio::addon.config)" 'any((.advanced // {})[]; . != null)')" == "true" ]]
+# Only native Thread controls need startup ordering, not app options/defaults.
+otbr_has_thread_settings() {
+    [[ "$(bashio::jq "$(bashio::addon.config)" '
+        [.advanced | .tx_power, .leader_weight, .router_eligible, .trel,
+            .omr_mode, .omr_prefix, .omr_preference, .route_preference,
+            .rio_preference, .srp_address_mode, .srp_anycast_sequence_number]
+        | any(. != null)
+    ')" == "true" ]]
 }
 
 # Pass one optional setting to its native CLI command, including numeric zero.

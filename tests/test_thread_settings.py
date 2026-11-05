@@ -24,7 +24,11 @@ import time
 args = sys.argv[1:]
 with open(os.environ["COMMANDS"], "a") as log:
     log.write(json.dumps(args) + "\n")
-if args == json.loads(os.environ.get("FAIL_COMMAND", "null")):
+limit = int(os.environ.get("FAIL_COUNT", "0"))
+matches = sum(json.loads(line) == args
+              for line in Path(os.environ["COMMANDS"]).read_text().splitlines())
+if (args == json.loads(os.environ.get("FAIL_COMMAND", "null"))
+        and (not limit or matches <= limit)):
     mode = os.environ.get("FAIL_MODE", "cli")
     if mode == "hang":
         time.sleep(60)
@@ -166,8 +170,8 @@ sleep() { SECONDS=$((SECONDS + $1)); }
                     {"srp_anycast": True, "srp_anycast_sequence_number": seed}
                 )
                 self.assertEqual(calls, [["srp", "server", "disable"],
-                                        ["srp", "server", "addrmode", "anycast"],
                                         ["srp", "server", "seqnum", str(expected)],
+                                        ["srp", "server", "addrmode", "anycast"],
                                         ["srp", "server", "auto", "enable"]])
                 self.assertEqual(self.counter.read_text(), f"{seed} {expected}\n")
         calls, _ = self.run_settings({"srp_anycast": True})
@@ -190,6 +194,20 @@ sleep() { SECONDS=$((SECONDS + $1)); }
                     )
                     self.assertEqual(calls[-1], ["srp", "server", "auto", "enable"])
                     self.assertIn("WARNING", warning)
+                    if failed[:3] == ["srp", "server", "seqnum"]:
+                        self.assertNotIn(["srp", "server", "addrmode", "anycast"], calls)
+        restore = ["srp", "server", "auto", "enable"]
+        for limit, attempts in (("1", 2), ("0", 3)):
+            for mode in ("cli", "exit"):
+                with self.subTest(restore_failures=limit, mode=mode):
+                    calls, warning = self.run_settings(
+                        {"srp_anycast": True, "omr_preference": "low"},
+                        FAIL_COMMAND=restore, FAIL_MODE=mode, FAIL_COUNT=limit,
+                    )
+                    self.assertEqual(calls.count(restore), attempts)
+                    self.assertEqual("Could not restore SRP auto-enable" in warning, limit == "0")
+                    self.assertIn(["br", "omrconfig", "custom", "fd00:1::/64", "low"], calls)
+                    self.assertNotIn(["srp", "server", "enable"], calls)
 
     def test_unwritable_counter_keeps_default_srp(self):
         self.data.rmdir()

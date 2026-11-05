@@ -8,7 +8,7 @@
 . /etc/s6-overlay/scripts/otbr-agent-common
 
 configure_srp_anycast() {
-    local seed=0 sequence_number previous sequence_file=/data/thread/srp-anycast-sequence
+    local seed=0 sequence_number previous attempt sequence_file=/data/thread/srp-anycast-sequence
     if bashio::config.has_value 'srp_anycast_sequence_number'; then
         seed="$(bashio::config 'srp_anycast_sequence_number')"
     fi
@@ -30,11 +30,20 @@ configure_srp_anycast() {
     # Explicit disable also turns off auto-enable. Restore border routing's
     # control even when setting the address mode or sequence number fails.
     if otbr_cli srp server disable; then
-        if otbr_cli srp server addrmode anycast; then
-            otbr_cli srp server seqnum "${sequence_number}" || true
+        # Do not advertise anycast with a stale sequence number.
+        if otbr_cli srp server seqnum "${sequence_number}"; then
+            otbr_cli srp server addrmode anycast || true
         fi
     fi
-    otbr_cli srp server auto enable || true
+    for attempt in 1 2 3; do
+        if otbr_cli srp server auto enable; then
+            return
+        fi
+        if ((attempt < 3)); then
+            sleep 1
+        fi
+    done
+    bashio::log.warning "Could not restore SRP auto-enable after 3 attempts; SRP may remain disabled. Restart the app after resolving the command failure."
 }
 
 if bashio::config.has_value 'leader_weight'; then

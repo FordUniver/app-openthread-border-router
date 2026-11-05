@@ -128,6 +128,9 @@ app after commissioning to apply them. They are not continuously enforced.
 default unicast advertisement to anycast. Border routing still controls whether
 the server runs. This affects how Thread clients select an SRP server; it does
 not transfer registrations between border routers or guarantee server selection.
+After changing SRP mode, the app makes up to three attempts to restore border
+routing's control. If all attempts fail, startup continues with a warning, but
+SRP may remain disabled. Resolve the reported command failure and restart the app.
 
 With anycast enabled, the app saves a sequence number under
 `/data/thread/srp-anycast-sequence` and advances it on each start, modulo 256.

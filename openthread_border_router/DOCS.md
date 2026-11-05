@@ -60,22 +60,22 @@ and 8081 in the OpenThread REST API port field).
 
 App configuration:
 
-| Configuration      | Description                                                                       |
-| ------------------ | --------------------------------------------------------------------------------- |
-| device (mandatory) | Serial port where the OpenThread RCP Radio is attached                            |
-| baudrate           | Serial port baudrate (depends on firmware)                                        |
-| flow_control       | If hardware flow control should be enabled (depends on firmware)                  |
-| otbr_log_level     | Set the log level of the OpenThread BorderRouter Agent                            |
-| firewall           | Enable OpenThread Border Router firewall to block unnecessary traffic             |
-| nat64              | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     |
-| tx_power           | Radio transmit power in dBm (default 6)                                          |
-| leader_weight      | Leader weight from 0 to 255 (unset by default)                                    |
-| take_leadership    | Request leadership after attaching (default off)                                 |
-| omr_preference     | Local OMR prefix preference: low, med or high (unset by default)                  |
-| srp_anycast        | Advertise the SRP server in anycast mode (default off)                            |
-| srp_anycast_sequence_number | Initial anycast sequence number from 0 to 255 (default 0)                |
-| network_device     | IP address and port to connect to a network-based RCP (see below)                 |
-| beta               | Enable beta mode to run a newer, experimental version of OpenThread Border Router |
+| Configuration               | Description                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| device (mandatory)          | Serial port where the OpenThread RCP Radio is attached                            |
+| baudrate                    | Serial port baudrate (depends on firmware)                                        |
+| flow_control                | If hardware flow control should be enabled (depends on firmware)                  |
+| otbr_log_level              | Set the log level of the OpenThread BorderRouter Agent                            |
+| firewall                    | Enable OpenThread Border Router firewall to block unnecessary traffic             |
+| nat64                       | Enable NAT64 to allow Thread devices accessing IPv4 addresses                     |
+| tx_power                    | Radio transmit power in dBm (default 6)                                           |
+| leader_weight               | Leader weight from 0 to 255 (unset by default)                                    |
+| take_leadership             | Request leadership after attaching (default off)                                  |
+| omr_preference              | Local OMR prefix preference: low, med or high (unset by default)                  |
+| srp_anycast                 | Advertise the SRP server in anycast mode (default off)                            |
+| srp_anycast_sequence_number | Initial anycast sequence number from 0 to 255 (default 0)                         |
+| network_device              | IP address and port to connect to a network-based RCP (see below)                 |
+| beta                        | Enable beta mode to run a newer, experimental version of OpenThread Border Router |
 
 > [!WARNING]
 > The OTBR expects the RCP connected radio to be on a reliable link such as

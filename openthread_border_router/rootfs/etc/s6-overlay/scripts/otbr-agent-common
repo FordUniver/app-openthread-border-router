@@ -31,19 +31,23 @@ otbr_log_level_to_int() {
     esac
 }
 
-# ot-ctl can report a CLI error while exiting successfully. Bound new optional
-# commands and treat either kind of failure as a rejected setting.
+# ot-ctl exits 0 on a CLI error or a dropped session. As with otctl, output
+# without a final "Done" is a failure; unlike otctl, new optional commands are
+# bounded and never fatal. Prints only the reply before "Done" (e.g. panid).
 otbr_cli() {
     local output
     if ! output=$(timeout --kill-after=1 5 ot-ctl "$@" 2>&1); then
         bashio::log.warning "OpenThread command failed: $* (${output})" >&2
         return 1
     fi
-    if [[ "${output}" =~ (^|$'\n')Error[[:space:]] ]]; then
+    if [[ "${output//[[:space:]]/}" != *Done ]]; then
         bashio::log.warning "OpenThread rejected command: $* (${output})" >&2
         return 1
     fi
-    printf '%s\n' "${output}"
+    output="${output%Done*}"
+    if [[ -n "${output//[[:space:]]/}" ]]; then
+        printf '%s\n' "${output}"
+    fi
 }
 
 # Only native Thread controls need startup ordering, not app options/defaults.

@@ -83,4 +83,15 @@
  */
 #define OPENTHREAD_CONFIG_MULTICAST_DNS_AUTO_ENABLE_ON_INFRA_IF 0
 
+/**
+ * @def OPENTHREAD_CONFIG_LOG_PREPEND_UPTIME
+ *
+ * Define as 1 to prepend the current uptime to all log messages.
+ *
+ * The POSIX platform enables this by default. The Supervisor adds wall-clock
+ * timestamps to the app logs (log_format: timestamp), so the uptime prefix is
+ * redundant.
+ */
+#define OPENTHREAD_CONFIG_LOG_PREPEND_UPTIME 0
+
 #endif /* OPENTHREAD_CORE_HA_CONFIG_POSIX_H_ */

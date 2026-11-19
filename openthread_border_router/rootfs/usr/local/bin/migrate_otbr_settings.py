@@ -224,5 +224,7 @@ async def main() -> None:
 if __name__ == "__main__":
     import coloredlogs
 
-    coloredlogs.install(level="DEBUG")
+    # The Supervisor adds timestamps to the app logs, so drop the timestamp (and
+    # the container hostname/PID) from the default coloredlogs format.
+    coloredlogs.install(level="DEBUG", fmt="%(name)s %(levelname)s %(message)s")
     asyncio.run(main())

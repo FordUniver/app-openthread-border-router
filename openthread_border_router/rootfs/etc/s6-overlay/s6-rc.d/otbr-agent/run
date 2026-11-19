@@ -16,6 +16,7 @@ declare migrate_flow_control
 declare otbr_log_level_int
 declare otbr_rest_listen
 declare otbr_rest_listen_port
+declare -a auto_attach_args=()
 
 # Cleanup unused configs
 if bashio::config.exists 'autoflash_firmware'; then
@@ -135,11 +136,16 @@ python3 /usr/local/bin/migrate_otbr_settings.py \
     --flow-control "${migrate_flow_control}" \
     --data-dir /data/thread/
 
+# Apply advanced settings before Thread attaches and border routing starts SRP.
+if otbr_has_advanced_settings; then
+    auto_attach_args+=(--auto-attach=0)
+fi
+
 bashio::log.info "Starting otbr-agent..."
 # shellcheck disable=SC2086
 exec s6-notifyoncheck -d -s 300 -w 300 -n 0 stdbuf -oL \
     "/usr/sbin/otbr-agent" -I ${thread_if} -B "${backbone_if}" \
         --rest-listen-address "${otbr_rest_listen}" \
-        -d${otbr_log_level_int} -v -s \
+        -d${otbr_log_level_int} -v -s "${auto_attach_args[@]}" \
         "spinel+hdlc+uart://${device}?uart-baudrate=${baudrate}${flow_control}" \
         "trel://${backbone_if}"

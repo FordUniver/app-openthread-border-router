@@ -31,3 +31,31 @@ otbr_log_level_to_int() {
     esac
 }
 
+# ot-ctl can report a CLI error while exiting successfully. Bound new optional
+# commands and treat either kind of failure as a rejected setting.
+otbr_cli() {
+    local output
+    if ! output=$(timeout --kill-after=1 5 ot-ctl "$@" 2>&1); then
+        bashio::log.warning "OpenThread command failed: $* (${output})" >&2
+        return 1
+    fi
+    if [[ "${output}" =~ (^|$'\n')Error[[:space:]] ]]; then
+        bashio::log.warning "OpenThread rejected command: $* (${output})" >&2
+        return 1
+    fi
+    printf '%s\n' "${output}"
+}
+
+# Only explicit values need startup ordering; an empty group keeps auto-attach.
+otbr_has_advanced_settings() {
+    [[ "$(bashio::jq "$(bashio::app.config)" 'any((.advanced // {})[]; . != null)')" == "true" ]]
+}
+
+# Pass one optional setting to its native CLI command, including numeric zero.
+otbr_apply_setting() {
+    local option="advanced.$1"
+    shift
+    if bashio::config.has_value "${option}"; then
+        otbr_cli "$@" "$(bashio::config "${option}")" || true
+    fi
+}
